@@ -59,7 +59,8 @@ def drawVisitsMatrix(file_name):
 
     picture.save(CONST_OUTPUT)
 
-if ("-help" in sys.argv) or ("--help" in sys.argv) or (len(sys.argv) < 3):
+if ("-help" in sys.argv) or ("--help" in sys.argv) or (len(sys.argv) < 2):
+    print "len(sys.argv) = ", len(sys.argv)
     drawPrintHelp()
 else:
     
@@ -73,7 +74,7 @@ else:
             CONST_BRIGHT = int( sys.argv[i+1] )
         
         if sys.argv[i] == "-file":
-            CONST_OUTPUT = int( sys.argv[i+1] )
+            CONST_OUTPUT = sys.argv[i+1]
 
     
     print "Draw parameters:"
@@ -85,5 +86,5 @@ else:
     
     print "Start processing.."
     drawVisitsMatrix(mm_filename)
-    print "picture saved - [ mm_filename ]"
+    print "picture saved - ",  mm_filename 
     
