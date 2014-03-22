@@ -6,6 +6,7 @@ import sys
 if ".." not in sys.path:
     sys.path.insert(0, "..")
 import misc_functions
+import clusters
 
 if "../dataset" not in sys.path:
     sys.path.insert(0, "../dataset")
@@ -68,8 +69,17 @@ class TI_Fabric:
             self.manual_borders_on = True
             self.borders_file_name = parser.get("BORDERS_SETTINGS", "borders_file_name")
         
-        if parser.get("BORDERS_SETTINGS", "comment") != "0":
+        if (parser.get("BORDERS_SETTINGS", "comment") != 0) and (parser.get("BORDERS_SETTINGS", "comment") != 0):
             comment = parser.get("BORDERS_SETTINGS", "comment")
+            
+        # CLUSTERS SETTINGS
+        if parser.get("CLUSTERS", "clusters_on") == "False":
+            self.clusters_on = False
+        elif parser.get("CLUSTERS", "clusters_on") == "True":
+            self.clusters_on = True
+            self.cluster_size = int(parser.get("CLUSTERS", "cluster_size"))
+        else:
+            raise Exception("Unknown feature for cluster")
 
     # end of TI_Fabric.__init__
 
@@ -139,6 +149,10 @@ class TI_Fabric:
         
         ti_path = TI_RESULT_DIR + "/" + self.case_dir
         
+        #print "Deleting previous ti..."
+        
+        #subprocess.call(["rm", "-rf", ti_path])
+        
         j = 0
         
         for window_coords in self.borders:
@@ -200,7 +214,7 @@ class TI_Fabric:
         block.append(self.dataset.events_numb - 1)
         borders.append(block)
         
-        print borders
+        #print borders
         return borders
     # end of ti_SplitEventsByInterval
     
@@ -286,12 +300,14 @@ class TI_Fabric:
             created while preparing time intervals
         """
         
+        print "Creating test matrices..."
+        
         for window_dir in self.ti_dirs:
             now = datetime.datetime.now()
             now_string = now.strftime("%Y-%m-%d %H:%M")
             
             coords = misc_functions.getWindowCoords(window_dir)
-            print coords
+            #print coords
             start_user = coords[0]
             stop_user  = coords[1]
             start_item = coords[2]
@@ -310,11 +326,13 @@ class TI_Fabric:
     
     # end of ti_CreateTestingMatrices
     
-    def ti_CreateTrainingMatrices_2(self):
+    def ti_CreateTrainingMatrices(self):
         """
             creates training matrices for each window that has been
             created while preparing time intervals
         """
+        
+        print "Creating train matrices..."
         
         for window_dir in self.ti_dirs:
             now = datetime.datetime.now()
@@ -329,7 +347,7 @@ class TI_Fabric:
             # Reading history matrix
             history_matrix = scipy.io.mmio.mmread(self.dataset.history_file_name)
             
-            print coords
+            #print coords
             history_matrix
             
             # selecting part for the current window
@@ -340,68 +358,7 @@ class TI_Fabric:
     
     # end of ti_CreateTrainingMatrices_2
     
-    def ti_CreateTrainingMatrices(self):
-        """
-            creates training matrices for each window that has been
-            created while preparing time intervals
-        """
-        
-        for window_dir in self.ti_dirs:
-            # reading coords for current case
-            coords = misc_functions.getWindowCoords(window_dir)
-            start_user = coords[0]
-            stop_user  = coords[1]
-            start_item = coords[2]
-            stop_item  = coords[3]
-            
-            original_history_file = open(self.dataset.history_file_name)
-            local_training_history_file = open(window_dir + "/train.mtx", 'w')
-            
-            #skip comments and copy some of them
-            local_training_history_file.write(original_history_file.readline())
-            original_history_file.readline()
-            original_history_file.readline()
-            now = datetime.datetime.now()
-            now_string = now.strftime("%Y-%m-%d %H:%M")
-            local_training_history_file.write("%Generated " + now_string + "\n")
-                
-            # run through the whole history file
-            ltw_list = [] #lines_to_write_list
-            visits_ctr = 0
-            zeros_ctr = 0
-            for line in original_history_file:
-                event_id = int(line.split("\t")[1]) - 1
 
-                if event_id < start_item:
-                    ltw_list.append(line)
-                    visits_ctr += 1
-                else:
-                    zeros_ctr += 1
-            
-            # write properties of the training matrix
-            train_users_numb = stop_user - start_user + 1
-            train_events_numb = stop_item - start_item + 1
-            local_training_history_file.write(str(train_users_numb) + \
-                " " + str(train_events_numb) + " " + str(visits_ctr) + "\n")
-            
-            for line in ltw_list:
-                local_training_history_file.write(line)
-            
-            original_history_file.close()
-            local_training_history_file.close()
-            
-            """ 
-            # DEBUGGING STUFF
-            print "total_ctr = ", total_ctr
-            print "visits_ctr = ", visits_ctr
-            print "zeros_ctr = ", zeros_ctr
-            print "zeros_ctr + visits_ctr = ", zeros_ctr + visits_ctr
-            print " -------------------------- "
-            """
-            if (zeros_ctr + visits_ctr != self.dataset.visits_numb):
-                raise Exception("counters mismatch")
-    
-# end of ti_CreateTrainingMatrices
     
     def ti_SaveTIInfo(self):
         """
@@ -427,6 +384,72 @@ class TI_Fabric:
         desc_file.close()
 # end of ti_SaveTIInfo
     
+
+
+
+    def ti_CreateClusters(self):
+        """
+            prepare clusters for futher predictions
+            Clusters are being saved in 
+            "test_clusters_<days>" file in directory of the case.
+        """
+    
+        for window_dir in self.ti_dirs:
+            print window_dir
+            
+            #test_matrix = scipy.io.mmio.mmread("test.mtx")
+            test_matrix_file = open(window_dir + "/test.mtx", 'r')
+    
+            # create item_X_time list
+            item_X_time_list = []
+            meta_file = open(self.dataset.events_file_name, 'r')
+            for line in meta_file:
+                item_X_time_list.append(misc_functions.getMetaString(line, self.dataset.time_meta_position))
+            meta_file.close()
+            
+            #print "len(item_X_time_list)=",len(item_X_time_list)
+        
+            # reading coords for current case
+            coords = misc_functions.getWindowCoords(window_dir)
+    
+            #print "coords = ", coords
+    
+            # stuff before cycle
+            clusters_list = []
+            cur_user_id = str(coords[0])
+            cur_cluster = ["user" + "\t" + str(coords[0])]
+    
+            # skip comments
+            for i2 in range(3):
+                test_matrix_file.readline()
+    
+            cur_user = -1
+            cur_cluster = []
+    
+            for line in test_matrix_file:
+                user_id = int(line.split()[0]) - 1 + coords[0]
+                item_id = int(line.split()[1]) - 1 + coords[2]
+        
+                if user_id != cur_user:     # next user
+                    #print "user_id = ", user_id
+                    cur_user = user_id
+                    if cur_cluster != []:
+                        clusters_list.append(cur_cluster)
+                    cur_cluster = ["user\t" + str(user_id)]
+                time_bounds = clusters.getTimeInterval(item_id, item_X_time_list, coords, self.cluster_size, self.dataset.events_numb)
+                cur_cluster.append(str(time_bounds[0]) + "\t" + str(item_id) + "\t" + str(time_bounds[1]))
+        
+            test_clusters_file = open(window_dir + "/test_clusters_" + str(self.cluster_size), 'w')
+            test_clusters_file.write("low_bound item_id high_bound\n")
+            for cluster in clusters_list:
+                for line in cluster:
+                    test_clusters_file.write(line + "\n")
+            test_clusters_file.close()
+        
+# end of ti_CreateClusters
+
+######################
+
     def ti_PrepareIntervals(self):
         """
             main TI function - prepares window-directories with documentation
@@ -462,9 +485,16 @@ class TI_Fabric:
         
         # creating of test and train matrices
         self.ti_CreateTestingMatrices()
-        self.ti_CreateTrainingMatrices_2()
+        self.ti_CreateTrainingMatrices()
+        
+        # create test clusters
+        if self.clusters_on:
+            print "<clusters_on> option is enabled"
+            print "Preparing clusters..."
+            self.ti_CreateClusters()
         
         # ??? do we need the same preparings for events meta files
+        # LOL nope i dont think so
         # self.ti_CreateTestingEvents()
         # self.ti_CreateTraingingEvents()
         
