@@ -1,9 +1,10 @@
 import datetime
 import sys
-import ini
-from ini import *
+#import ini
+#from ini import *
 import numpy
 
+"""
 def gag():
 
     print "!!!!!!!!!!!!!!!!!"
@@ -12,13 +13,15 @@ def gag():
     print "!!!!!!!!!!!!!!!!!"
 
 def getEventDatetime(event_str, time_position):
-    """
+
     
-    """
+
     
     event_time_str = split
     
 # end of getEventDatetime
+
+"""
 
 def dayTime(date_string):
     time = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
@@ -36,7 +39,8 @@ def dayTime(date_string):
         return 4
     elif (time.hour > 20):
         return 5
-        
+
+"""
 def priceToPriceCat(rubles):
     if rubles < 0:
         raise Exception("Negative price: " + str(rubles))
@@ -53,7 +57,7 @@ def priceToPriceCat(rubles):
         return 5
     else:
         return 6
-
+"""
 
 def getMeta(seminar_meta_string, meta_position_id):
     
@@ -77,7 +81,7 @@ def getMeta(seminar_meta_string, meta_position_id):
         return 0
     else:
         return int(stri)
-        
+
 def getMetaString(seminar_meta_string, meta_position_id):
     return seminar_meta_string.split('\t')[meta_position_id]
 
@@ -166,7 +170,7 @@ def cmpTime(time_string1, time_string2):
         else:
             return -1
             
-def ifTimeInterval(time_string1, time_string2):
+def ifTimeInterval(time_string1, time_string2, days_interval):
     time1 = datetime.datetime.strptime(time_string1, "%Y-%m-%d %H:%M:%S")
     time2 = datetime.datetime.strptime(time_string2, "%Y-%m-%d %H:%M:%S")
     
@@ -180,18 +184,22 @@ def ifTimeInterval(time_string1, time_string2):
     step()
     """
     
-    if abs((time1 - time2)).days >= DAYS_INTERVAL_PREPARE:
+    if abs((time1 - time2)).days >= days_interval:
         return True
     else:
         return False
 
-def getTimeInterval(item_id, item_X_time_list, coords):
+def getTimeInterval(item_id, item_X_time_list, coords, days_interval, items_numb):
     
     low_bound = -1
     high_bound = -1
     
     i = item_id
-    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id]):
+    
+    #print "i=", i
+    #print "days_interval = ", days_interval
+    
+    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id], days_interval):
         if (i - 1) < coords[1]:
             break
         i -= 1
@@ -200,8 +208,9 @@ def getTimeInterval(item_id, item_X_time_list, coords):
     i = item_id
     #print "len(item_X_time_list) = ", len(item_X_time_list)
     #print "item_id = ", item_id
-    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id]):
-        if ((i + 1) > coords[3]) or ((i + 1) >= ITEMS_NUMB - 1):
+    #print items_numb
+    while not ifTimeInterval(item_X_time_list[i], item_X_time_list[item_id], days_interval):
+        if ((i + 1) > coords[3]) or ((i + 1) >= items_numb - 1):
             break
         i += 1
         #print "i = ", i
@@ -224,9 +233,10 @@ def cosineSimilarity(vec1, vec2):
     else:
         return (result / denominator)
 
-def getClustersListFromClustersFile(days_interval):
+
+def getClustersListFromClustersFile(interval_path, days_interval):
     
-    clusters_file = open("test_clusters_" + str(days_interval), 'r')
+    clusters_file = open(interval_path + "/test_clusters_" + str(days_interval), 'r')
     
     # skip header 
     clusters_file.readline()
