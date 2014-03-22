@@ -24,6 +24,7 @@ import importlib
 MAG_TRUNK_DIR = os.path.abspath("../..")
 MAG_DATASET_DIR = MAG_TRUNK_DIR + "/data/datasets"
 MAG_TI_DIR = MAG_TRUNK_DIR + "/data/time_intervals"
+MAG_GEAR_DIR = "../gears"
 
 if "../time_intervals_procedure" not in sys.path:
     sys.path.insert(0, "../time_intervals_procedure")
@@ -64,6 +65,7 @@ class Magician:
         
         # initialize TI by its contructor from its name from conf file
         self.ti = TI.TI(MAG_TI_DIR + "/" + parser.get("TI", "ti"))
+        self.interval_size = int(parser.get("TI", "interval_size"))
         
         # load GEAR
         gear_module_name = parser.get("MODULES", "gear_module")
@@ -94,6 +96,10 @@ class Magician:
             self.need_estimate = True
         else:
             self.need_estimate = False
+        
+        # set file name for results log
+        self.results_file_name = parser.get("SETTINGS", "results_file_name")
+        
             
     # end of Magician.__init__
     
@@ -134,7 +140,7 @@ class Magician:
             if self.need_estimate :
                 test_matrix = scipy.io.mmio.mmread(MAG_TI_DIR + "/" + interval_path + "/test.mtx")
                 self.reporter.report("    test mtx loaded")
-                result_matrix = scipy.io.mmio.mmread(MAG_TI_DIR + "/" + interval_path + "/results.mtx")
+                result_matrix = scipy.io.mmio.mmread(MAG_TI_DIR + "/" + interval_path + "/prediction.mtx")
                 self.reporter.report("    results mtx loaded")
                 self.reporter.report("    prediction started")
                 self.estimator.estimate(self, test_matrix, result_matrix)
