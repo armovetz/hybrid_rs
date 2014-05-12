@@ -60,7 +60,7 @@ def estimateNDCGp( test_matrix, prediction_matrix, clusters_list, coords, result
         #print "user_cluster = ", user_cluster
         #print "user_cluster[0] = ", user_cluster[0]
         
-        user = int(((user_cluster[0]).split("\t"))[1]) - coords[0]
+        user = int(((user_cluster[0]).split("\t"))[1])
         #print "user = ", user
         user_prediction = prediction_matrix[user].toarray()[0]
         user_visits = test_matrix[user].toarray()[0]
@@ -72,8 +72,8 @@ def estimateNDCGp( test_matrix, prediction_matrix, clusters_list, coords, result
         user_average_p = float(0.0)
         for byte in user_cluster[1 : ] :
             #misc_functions.step()
-            byte_visits = user_visits[misc_functions.getMeta(byte, 0) - coords[1] : misc_functions.getMeta(byte, 2) + 1 - coords[1]]
-            byte_predictions = user_prediction[misc_functions.getMeta(byte, 0) - coords[1] : misc_functions.getMeta(byte, 2) + 1 - coords[1]]
+            byte_visits = user_visits[misc_functions.getMeta(byte, 0) : misc_functions.getMeta(byte, 2) + 1]
+            byte_predictions = user_prediction[misc_functions.getMeta(byte, 0)  : misc_functions.getMeta(byte, 2) + 1]
             
             #print "byte_visits = ", byte_visits
             #print "byte_predictions = ", byte_predictions
