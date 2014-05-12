@@ -1,3 +1,3 @@
 #bin/sh
 
-python script.py | tee TI.log
+python script.py

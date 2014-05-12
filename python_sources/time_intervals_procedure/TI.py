@@ -246,7 +246,7 @@ class TI_Fabric:
     def ti_ReadBordersManually(self):
         """
             reads borders manually from file
-            generate warning if windows are 
+            generate warning if windows are BAD
         """
         
         borders_file = open(self.borders_file_name)
@@ -319,8 +319,8 @@ class TI_Fabric:
             history_matrix
             
             # selecting part for the current window
-            local_testing_matrix = (history_matrix.tocsr())[start_user : stop_user, \
-                                                            start_item : stop_item + 1].copy()
+            local_testing_matrix = (history_matrix.tocsr())[start_user - 1 : stop_user, \
+                                                            start_item - 1 : stop_item ].copy()
             
             scipy.io.mmio.mmwrite(window_dir + "/test", local_testing_matrix, now_string, 'integer')
     
@@ -351,14 +351,77 @@ class TI_Fabric:
             history_matrix
             
             # selecting part for the current window
-            local_training_matrix = (history_matrix.tocsr())[start_user : stop_user, \
-                                                             : start_item ].copy()
+            local_training_matrix = (history_matrix.tocsr()) \
+                                            [start_user - 1 : stop_user, \
+                                                            : start_item - 1].copy()
             
             scipy.io.mmio.mmwrite(window_dir + "/train", local_training_matrix, now_string, 'integer')
     
-    # end of ti_CreateTrainingMatrices_2
+    # end of ti_CreateTrainingMatrices
     
+    def ti_CreateTestingEvents(self):
+        """
+            creates test meta files for events for  each window 
+            that has been created while preparing time intervals
+        """
+        
+        print "Creating test meta files for events..."
 
+        for window_dir in self.ti_dirs:
+            
+            coords = misc_functions.getWindowCoords(window_dir)
+            start_item = coords[2]
+            stop_item  = coords[3]
+            
+            events_file = open(self.dataset.events_file_name, 'r')
+            interval_events_file = open(window_dir + "/events_test", 'w')
+            
+            # skip all items until start item
+            for i in range(start_item):
+                events_file.readline()
+
+            # recount ids
+            new_local_ctr = 1
+            for i in range(stop_item - start_item + 1):
+                meta_line = events_file.readline()
+                rest_of_line = meta_line[meta_line.find("\t"):]
+                interval_events_file.write(str(new_local_ctr) + rest_of_line)
+                new_local_ctr += 1
+            
+            events_file.close()
+            interval_events_file.close()
+
+    # end of ti_CreateTestingEvents
+
+    def ti_CreateTrainingEvents(self):
+        """
+            creates train meta files for events for  each window 
+            that has been created while preparing time intervals
+        """
+        
+        print "Creating train meta files for events..."
+
+        for window_dir in self.ti_dirs:
+            
+            coords = misc_functions.getWindowCoords(window_dir)
+            start_item = coords[2]
+            #stop_item  = coords[3]
+            
+            events_file = open(self.dataset.events_file_name, 'r')
+            interval_events_file = open(window_dir + "/events_train", 'w')
+            
+            # take only meta lines for events until <start_item> events
+            new_local_ctr = 1
+            for i in range(start_item - 1):
+                meta_line = events_file.readline()
+                rest_of_line = meta_line[meta_line.find("\t"):]
+                interval_events_file.write(str(new_local_ctr) + rest_of_line)
+                new_local_ctr += 1
+            
+            events_file.close()
+            interval_events_file.close()
+
+    # end of ti_CreateTrainingEvents
     
     def ti_SaveTIInfo(self):
         """
@@ -427,8 +490,10 @@ class TI_Fabric:
             cur_cluster = []
     
             for line in test_matrix_file:
-                user_id = int(line.split()[0]) - 1 + coords[0]
-                item_id = int(line.split()[1]) - 1 + coords[2]
+                #user_id = int(line.split()[0]) - 1 + coords[0]
+                #item_id = int(line.split()[1]) - 1 + coords[2]
+                user_id = int(line.split()[0])
+                item_id = int(line.split()[1])
         
                 if user_id != cur_user:     # next user
                     #print "user_id = ", user_id
@@ -450,7 +515,7 @@ class TI_Fabric:
 
 ######################
 
-    def ti_PrepareIntervals(self):
+    def ti_main_PrepareIntervals(self):
         """
             main TI function - prepares window-directories with documentation
             and prepares corresponding files for history, meta etc.
@@ -493,10 +558,9 @@ class TI_Fabric:
             print "Preparing clusters..."
             self.ti_CreateClusters()
         
-        # ??? do we need the same preparings for events meta files
-        # LOL nope i dont think so
-        # self.ti_CreateTestingEvents()
-        # self.ti_CreateTraingingEvents()
+        # create local copies of events meta lines for every interval
+        self.ti_CreateTestingEvents()
+        self.ti_CreateTrainingEvents()
         
         self.ti_SaveTIInfo()
         self.ti_PrintTailInfo()
