@@ -84,18 +84,26 @@ class Magician:
         if estimator_module_name != "0":
             self.estimator = importlib.import_module(estimator_module_name)
             print "estimator module <" + estimator_module_name + "> loaded"
-        
+
+        # intialize DATASET
+        dataset_name = parser.get("DATASET", "dataset_name")
+        dataset_path = MAG_DATASET_DIR + "/" + dataset_name
+        self.dataset = dataset.Dataset(dataset_path)
 
         # set boolean settings for predict and estimate
         if parser.get("SETTINGS", "predict") == "true":
             self.need_predict = True
-        else:
+        elif parser.get("SETTINGS", "predict") == "false":
             self.need_predict = False
+        else:
+            raise Exception("<predict> switcher can accept only \'true\' or \'false\' values")
         
         if parser.get("SETTINGS", "estimate") == "true":
             self.need_estimate = True
-        else:
+        elif parser.get("SETTINGS", "estimate") == "false":
             self.need_estimate = False
+        else:
+            raise Exception("<estimate> switcher can accept only \'true\' or \'false\' values")
         
         # set file name for results log
         self.results_file_name = parser.get("SETTINGS", "results_file_name")
