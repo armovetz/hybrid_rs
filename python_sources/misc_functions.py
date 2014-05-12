@@ -59,8 +59,17 @@ def priceToPriceCat(rubles):
         return 6
 """
 
-def getMeta(seminar_meta_string, meta_position_id):
+def getMeta(meta_string, meta_position_id):
     
+    field = meta_string.split("\t")[meta_position_id]
+    
+    try:
+        meta = int(field)
+        return meta
+    except ValueError:
+        return field
+
+def getMeta2(seminar_meta_string, meta_position_id):
     #print "GET META"
     #print "meta_position_id = ", meta_position_id
     #print "seminar_meta_string = ", seminar_meta_string
@@ -113,6 +122,18 @@ def sortMetaListByTime(meta_list, time_meta_position):
 # enf of sortMetaListByTime
 
 def sortMetaListByMeta(meta_list, meta_id_position):
+    
+    def cmpLineByMeta(op1, op2):
+        #if op1.split('\t')[meta_id_position] == "":
+        #    return -1
+        #if op2.split('\t')[meta_id_position] == "":
+        #    return 1
+        return int(op1.split('\t')[meta_id_position]) - int(op2.split('\t')[meta_id_position])
+    
+    return sorted(meta_list, cmpLineByMeta)
+# end of sortMetaListByMeta
+
+def sortMetaListByMeta_obsolete(meta_list, meta_id_position):
     
     def my_cmp(op1, op2):
         if op1.split('\t')[meta_id_position] == "":
@@ -260,3 +281,50 @@ def getClustersListFromClustersFile(interval_path, days_interval):
     clusters_file.close()
     
     return clusters_list
+
+
+def sortHistoryRawStrings(meta_list):
+    
+    def cmpHistoryString(op1, op2):
+        op1_user_id = int(op1.split('\t')[0])
+        op2_user_id = int(op2.split('\t')[0])
+        
+        op1_item_id = int(op1.split('\t')[1])
+        op2_item_id = int(op2.split('\t')[1])
+        
+        if op1_user_id != op2_user_id:
+            return op1_user_id - op2_user_id
+        else:
+            return op1_item_id - op2_item_id
+
+    return sorted(meta_list, cmpHistoryString)
+
+# end of sortHistoryRawStrings
+
+def loadEnumMetas(event_file_name, dataset):
+    """
+        takes enum metas of events from event file
+        regarding to dataset description
+        return list of lists of integers
+    """
+    
+    event_file = open(event_file_name, 'r')
+    
+    events_meta_list = []
+    
+    enum_metas_positions = dataset.metas_enum_positions
+    
+    for line in event_file:
+        line_metas = line[:-1].split('\t')
+        
+        event_metas = []
+        for enum_pos in enum_metas_positions:
+            event_metas.append(int(line_metas[enum_pos]))
+        
+        events_meta_list.append(event_metas)
+    
+    event_file.close()
+    
+    return events_meta_list
+
+# end of loadEnumMetas
