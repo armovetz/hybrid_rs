@@ -58,6 +58,7 @@ def drawVisitsMatrix(file_name):
             picture.putpixel((j,i), (col, col, col))
 
     picture.save(CONST_OUTPUT)
+#end of drawVisitsMatrix
 
 if ("-help" in sys.argv) or ("--help" in sys.argv) or (len(sys.argv) < 2):
     print "len(sys.argv) = ", len(sys.argv)
@@ -86,5 +87,5 @@ else:
     
     print "Start processing.."
     drawVisitsMatrix(mm_filename)
-    print "picture saved - ",  mm_filename 
+    print "picture saved - ",  CONST_OUTPUT
     
